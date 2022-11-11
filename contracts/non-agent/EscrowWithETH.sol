@@ -8,7 +8,11 @@ import "./Escrow.sol";
 
 contract EscrowWithETH is Escrow, IEscrowWithETH, ReentrancyGuard {
 
-    function depositByETH(address _recipient, uint256 _expiration) external override payable returns (uint256) {
+    function depositByETH(address _recipient, uint256 _expiration) external virtual override payable returns (uint256) {
+        return _depositByETH(_recipient, _expiration);
+    }
+
+    function _depositByETH(address _recipient, uint256 _expiration) internal returns (uint256) {
         require(msg.value > 0, "amount invalid");
         require(_recipient != address(0x0), "recipient invalid");
         Pool memory pool = Pool(
