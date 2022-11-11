@@ -41,20 +41,24 @@ struct Pool {
 ```
 Storage variables
 
-| name        |              type               | description           |
-|:------------|:-------------------------------:|:----------------------|
-| poolCount   |         uint256 public          | number of total pools |
-| pools       | mapping(uint256 => Pool) public | pool list by poolId   |
-| feePercent  |    uint256 public immutable     | fee percent           |
+| name       |                type                | description            |
+|:-----------|:----------------------------------:|:-----------------------|
+| poolCount  |           uint256 public           | number of total pools  |
+| pools      |  mapping(uint256 => Pool) public   | pool list by poolId    |
+| feePercent |      uint256 public immutable      | fee percent            |
+| agents     | mapping(uint256 => address) public | agent list by poolId   |
 
 
 #### Functions
 
-| Function Name     | Action  |                                   Description | Permission |
-|:------------------|:-------:|----------------------------------------------:|------------|
-| deposit           |  write  | Deposit ERC20 token, and create a escrow pool | any        |
-| depositByETH      |  write  |         Deposit ETH, and create a escrow pool | any        |
-| withdraw          |  write  |        Withdraw token from target escrow pool | onlyAgent  |
+| Function Name         | Action  | Description                                                      | Permission    |
+|:----------------------|:-------:|:-----------------------------------------------------------------|---------------|
+| deposit               |  write  | Deposit ERC20 token, and create a escrow pool                    | any           |
+| depositWithAgent      |  write  | Deposit ERC20 token with agent address, and create a escrow pool | any           |
+| depositByETH          |  write  | Deposit ETH, and create a escrow pool                            | any           |
+| depositByETHWithAgent |  write  | Deposit ETH with agent address, and create a escrow pool         | any           |
+| setAgent              |  write  | Set agent of pool                                                | onlyPoolOwner |
+| withdraw              |  write  | Withdraw token from target escrow pool                           | onlyAgent     |
 
 
 ##### Function I/O parameters
@@ -69,7 +73,19 @@ Storage variables
 |             |         |                                    |     |
 |             | uint256 | id of pool created by this funcion |  O  |
 
-2) depositByETH - payable
+2) depositWithAgent
+
+| name        |  type   | description                        | I/O |
+|:------------|:-------:|:-----------------------------------|:---:|
+| _token      | IERC20  | ERC20 token address                |  I  |
+| _recipient  | address | recipient wallet address           |  I  |
+| _amount     | uint256 | token amount                       |  I  |
+| _expiration | uint256 | timestamp of expiration range      |  I  |
+| _agent      | address | agent of pool                      |  I  |
+|             |         |                                    |     |
+|             | uint256 | id of pool created by this funcion |  O  |
+
+3) depositByETH - payable
 
 | name        |  type   | description                        | I/O |
 |:------------|:-------:|:-----------------------------------|:---:|
@@ -78,7 +94,26 @@ Storage variables
 |             |         |                                    |     |
 |             | uint256 | id of pool created by this funcion |  O  |
 
-3) withdraw - nonReentrant, onlyAgent
+4) depositByETHWithAgent - payable
+
+| name        |  type   | description                        | I/O |
+|:------------|:-------:|:-----------------------------------|:---:|
+| _recipient  | address | recipient wallet address           |  I  |
+| _expiration | uint256 | timestamp of expiration range      |  I  |
+| _agent      | address | agent of pool                      |  I  |
+|             |         |                                    |     |
+|             | uint256 | id of pool created by this funcion |  O  |
+
+5) setAgent
+
+| name    |  type   | description                        | I/O |
+|:--------|:-------:|:-----------------------------------|:---:|
+| _poolId | uint256 | id of target pool                  |  I  |
+| _agent  | address | agent address                      |  I  |
+|         |         |                                    |     |
+|         |  bool   | return true if everything is fine  |  O  |
+
+6) withdraw - nonReentrant, onlyAgent
 
 | name       |  type   | description                       | I/O |
 |:-----------|:-------:|:----------------------------------|:---:|
