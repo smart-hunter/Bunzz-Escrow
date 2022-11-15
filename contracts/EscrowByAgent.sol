@@ -15,9 +15,9 @@ contract EscrowByAgent is Ownable, ReentrancyGuard, IEscrowByAgent {
         address token;
         address sender;
         address recipient;
+        uint64 expiration;
         bool active;
         uint256 amount;
-        uint256 expiration;
     }
 
     // use struct to decrease storage size
@@ -101,6 +101,7 @@ contract EscrowByAgent is Ownable, ReentrancyGuard, IEscrowByAgent {
             refundStatus.recipient = true;
         } else if (msg.sender == pool.sender) {
             require(!refundStatus.sender, "already done");
+            refundStatus.sender = true;
         } else {
             revert("no permission");
         }
@@ -125,14 +126,14 @@ contract EscrowByAgent is Ownable, ReentrancyGuard, IEscrowByAgent {
             address(_token),
             msg.sender,
             _recipient,
+            uint64(block.timestamp + _expiration),
             true,
-            _amount,
-            block.timestamp + _expiration
+            _amount
         );
         uint256 poolId = poolCount;
         pools[poolId] = pool;
         emit Deposit(msg.sender, _recipient, address(_token), _amount, block.timestamp + _expiration, poolId);
-        poolCount ++;
+        ++ poolCount;
         return poolId;
     }
 
@@ -143,14 +144,14 @@ contract EscrowByAgent is Ownable, ReentrancyGuard, IEscrowByAgent {
             address(0x0),
             msg.sender,
             _recipient,
+            uint64(block.timestamp + _expiration),
             true,
-            msg.value,
-            block.timestamp + _expiration
+            msg.value
         );
         uint256 poolId = poolCount;
         pools[poolId] = pool;
         emit DepositByETH(msg.sender, _recipient, msg.value, block.timestamp + _expiration, poolId);
-        poolCount ++;
+        ++ poolCount;
         return poolId;
     }
 
