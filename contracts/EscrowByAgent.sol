@@ -3,10 +3,13 @@ pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "./interfaces/IEscrowByAgent.sol";
 
 
 contract EscrowByAgent is Ownable, ReentrancyGuard, IEscrowByAgent {
+
+    using SafeERC20 for IERC20;
 
     struct Pool {
         address token;
@@ -36,7 +39,6 @@ contract EscrowByAgent is Ownable, ReentrancyGuard, IEscrowByAgent {
     }
 
     modifier onlyPoolOwner(uint256 _poolId) {
-        require(_poolId < poolCount, "poolId invalid");
         require(pools[_poolId].sender == msg.sender, "no permission");
         _;
     }
@@ -73,7 +75,7 @@ contract EscrowByAgent is Ownable, ReentrancyGuard, IEscrowByAgent {
         require(pool.amount > 0, "no money in pool");
 
         if (pool.token != address(0x0)) {
-            require(IERC20(pool.token).transfer(msg.sender, pool.amount), "transfer failed");
+            IERC20(pool.token).safeTransfer(msg.sender, pool.amount);
         } else {
             (bool sent, ) = payable(msg.sender).call{value: (pool.amount)}("");
             require(sent, "Failed to send Ether");
@@ -118,7 +120,7 @@ contract EscrowByAgent is Ownable, ReentrancyGuard, IEscrowByAgent {
     function _deposit(IERC20 _token, address _recipient, uint256 _amount, uint256 _expiration) internal returns (uint256) {
         require(_amount > 0, "amount invalid");
         require(_recipient != address(0x0), "recipient invalid");
-        _token.transferFrom(msg.sender, address(this), _amount);
+        _token.safeTransferFrom(msg.sender, address(this), _amount);
         Pool memory pool = Pool(
             address(_token),
             msg.sender,
@@ -163,8 +165,8 @@ contract EscrowByAgent is Ownable, ReentrancyGuard, IEscrowByAgent {
         uint256 fee = pool.amount * feePercent / 10000;
 
         if (pool.token != address(0x0)) {
-            require(IERC20(pool.token).transfer(msg.sender, pool.amount - fee), "transfer failed");
-            require(IERC20(pool.token).transfer(_collector(_poolId), fee), "transfer failed - fee");
+            IERC20(pool.token).safeTransfer(msg.sender, pool.amount - fee);
+            IERC20(pool.token).safeTransfer(_collector(_poolId), fee);
         } else {
             (bool sent1, ) = payable(msg.sender).call{value: (pool.amount - fee)}("");
             (bool sent2, ) = payable(_collector(_poolId)).call{value: (fee)}("");
