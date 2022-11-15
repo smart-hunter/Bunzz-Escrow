@@ -62,6 +62,10 @@ contract EscrowByAgent is Ownable, ReentrancyGuard, IEscrowByAgent {
         return _poolId;
     }
 
+    function withdraw(uint256 _poolId) external onlyAgent(_poolId) override nonReentrant returns (bool) {
+        return _withdraw(_poolId);
+    }
+
     function setAgent(uint256 _poolId, address _agent) external override onlyPoolOwner(_poolId) returns (bool) {
         return _setAgent(_poolId, _agent);
     }
@@ -72,7 +76,7 @@ contract EscrowByAgent is Ownable, ReentrancyGuard, IEscrowByAgent {
         require(refundStatus.recipient, "recipient didn't allow");
         Pool memory pool = pools[_poolId];
         require(msg.sender == pool.sender || refundStatus.sender, "sender didn't allow");
-        require(pool.amount > 0, "no money in pool");
+        require(pool.amount > 0 && pool.active, "no money in pool");
 
         if (pool.token != address(0x0)) {
             IERC20(pool.token).safeTransfer(msg.sender, pool.amount);
@@ -111,10 +115,6 @@ contract EscrowByAgent is Ownable, ReentrancyGuard, IEscrowByAgent {
 
         emit SetAgent(_poolId, _agent);
         return true;
-    }
-
-    function withdraw(uint256 _poolId) external onlyAgent(_poolId) override nonReentrant returns (bool) {
-        return _withdraw(_poolId);
     }
 
     function _deposit(IERC20 _token, address _recipient, uint256 _amount, uint256 _expiration) internal returns (uint256) {
