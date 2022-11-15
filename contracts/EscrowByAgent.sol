@@ -18,7 +18,7 @@ contract EscrowByAgent is Ownable, ReentrancyGuard, IEscrowByAgent {
     }
 
     // use struct to decrease storage size
-    struct Refundable {
+    struct RefundStatus {
         bool sender;
         bool recipient;
     }
@@ -27,6 +27,8 @@ contract EscrowByAgent is Ownable, ReentrancyGuard, IEscrowByAgent {
     uint256 public immutable feePercent;
     mapping(uint256 => Pool) public pools;
     mapping(uint256 => address) public agents;
+    mapping(uint256 => RefundStatus) public refundStatusList;
+
 
     modifier onlyAgent(uint256 _poolId) {
         require(agents[_poolId] == msg.sender, "not agent");
@@ -60,6 +62,44 @@ contract EscrowByAgent is Ownable, ReentrancyGuard, IEscrowByAgent {
 
     function setAgent(uint256 _poolId, address _agent) external override onlyPoolOwner(_poolId) returns (bool) {
         return _setAgent(_poolId, _agent);
+    }
+
+    function refund(uint256 _poolId) external override nonReentrant returns (bool) {
+        require(_poolId < poolCount, "poolId invalid");
+        RefundStatus memory refundStatus = refundStatusList[_poolId];
+        require(refundStatus.recipient, "recipient didn't allow");
+        Pool memory pool = pools[_poolId];
+        require(msg.sender == pool.sender || refundStatus.sender, "sender didn't allow");
+        require(pool.amount > 0, "no money in pool");
+
+        if (pool.token != address(0x0)) {
+            require(IERC20(pool.token).transfer(msg.sender, pool.amount), "transfer failed");
+        } else {
+            (bool sent, ) = payable(msg.sender).call{value: (pool.amount)}("");
+            require(sent, "Failed to send Ether");
+        }
+
+        pools[_poolId].active = false;
+        pools[_poolId].amount = 0;
+
+        emit Refund(msg.sender, pool.sender, _poolId, pool.amount);
+        return true;
+    }
+
+    function allowRefund(uint256 _poolId) external override returns (bool) {
+        require(_poolId < poolCount, "poolId invalid");
+        Pool memory pool = pools[_poolId];
+        RefundStatus storage refundStatus = refundStatusList[_poolId];
+        if (msg.sender == pool.recipient) {
+            require(!refundStatus.recipient, "already done");
+            refundStatus.recipient = true;
+        } else if (msg.sender == pool.sender) {
+            require(!refundStatus.sender, "already done");
+        } else {
+            revert("no permission");
+        }
+        emit AllowRefund(msg.sender, _poolId);
+        return true;
     }
 
     function _setAgent(uint256 _poolId, address _agent) internal returns (bool) {
@@ -117,11 +157,10 @@ contract EscrowByAgent is Ownable, ReentrancyGuard, IEscrowByAgent {
         Pool memory pool = pools[_poolId];
 
         require(block.timestamp > pool.expiration, "can't withdraw yet");
+        require(pool.amount > 0, "no money in pool");
         require(pool.active, "already withdrawn");
 
         uint256 fee = pool.amount * feePercent / 10000;
-        require(IERC20(pool.token).transfer(msg.sender, pool.amount - fee), "transfer failed");
-        require(IERC20(pool.token).transfer(owner(), fee), "transfer failed - fee");
 
         if (pool.token != address(0x0)) {
             require(IERC20(pool.token).transfer(msg.sender, pool.amount - fee), "transfer failed");
