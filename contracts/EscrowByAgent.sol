@@ -62,7 +62,8 @@ contract EscrowByAgent is Ownable, ReentrancyGuard, IEscrowByAgent {
     }
 
     function _deposit(address _token, address _sender, address _recipient, address _agent, uint256 _amount) internal returns (uint256) {
-        Pool memory pool = Pool(
+        uint256 poolId = poolCount;
+        pools[poolId] = Pool(
             _token,
             _sender,
             _recipient,
@@ -71,8 +72,6 @@ contract EscrowByAgent is Ownable, ReentrancyGuard, IEscrowByAgent {
             false,
             _amount
         );
-        uint256 poolId = poolCount;
-        pools[poolId] = pool;
 
         // if _token is zero address, then ETH
         emit Deposit(_sender, _recipient, _agent, _token, _amount, block.timestamp, poolId);
