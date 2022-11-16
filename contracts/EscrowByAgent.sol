@@ -29,9 +29,9 @@ contract EscrowByAgent is Ownable, ReentrancyGuard, IEscrowByAgent {
     }
 
     uint256 public poolCount;
-    uint256 public immutable feePercent;
-    uint256 public immutable agentFeePercent;
-    uint256 public immutable cancelLockTime;
+    uint96 public immutable feePercent;
+    uint96 public immutable agentFeePercent;
+    uint64 public immutable cancelLockTime;
     mapping(uint256 => Pool) public pools;
     mapping(uint256 => RefundStatus) public refundStatusList;
 
@@ -40,7 +40,7 @@ contract EscrowByAgent is Ownable, ReentrancyGuard, IEscrowByAgent {
         _;
     }
 
-    constructor(uint256 _feePercent, uint256 _agentFeePercent, uint256 _cancelLockDays) {
+    constructor(uint96 _feePercent, uint96 _agentFeePercent, uint64 _cancelLockDays) {
         require(_feePercent < 10000, "feePercent invalid");
         require(_agentFeePercent < 10000, "AgentFeePercent invalid");
         feePercent = _feePercent;
