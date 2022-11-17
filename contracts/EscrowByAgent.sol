@@ -121,9 +121,9 @@ contract EscrowByAgent is Ownable, ReentrancyGuard, IEscrowByAgent {
         require(pool.amount > 0 && !pool.isReleased, "no money in pool");
 
         if (pool.token != address(0x0)) {
-            IERC20(pool.token).safeTransfer(msg.sender, pool.amount);
+            IERC20(pool.token).safeTransfer(pool.sender, pool.amount);
         } else {
-            (bool sent, ) = payable(msg.sender).call{value: (pool.amount)}("");
+            (bool sent, ) = payable(pool.sender).call{value: (pool.amount)}("");
             require(sent, "Failed to send Ether");
         }
 
