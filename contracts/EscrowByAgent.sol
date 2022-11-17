@@ -129,7 +129,7 @@ contract EscrowByAgent is Ownable, ReentrancyGuard, IEscrowByAgent {
 
         pools[_poolId].amount = 0;
 
-        emit Refund(msg.sender, pool.sender, _poolId, pool.amount);
+        emit Cancel(msg.sender, pool.sender, _poolId, pool.amount);
         return true;
     }
 
@@ -151,6 +151,24 @@ contract EscrowByAgent is Ownable, ReentrancyGuard, IEscrowByAgent {
             revert("no permission");
         }
         emit ApproveCancel(msg.sender, _poolId);
+        return true;
+    }
+
+    function cancelable(uint256 _poolId) external override view returns (bool) {
+        if (_poolId >= poolCount) return false;
+
+        RefundStatus memory refundStatus = refundStatusList[_poolId];
+
+        if (!refundStatus.recipient && !refundStatus.agent) return false;
+
+        Pool memory pool = pools[_poolId];
+
+        if (
+            (msg.sender != pool.sender && !refundStatus.sender) ||
+            (!refundStatus.recipient && block.timestamp <= pool.createdAt + cancelLockTime) ||
+            (pool.amount == 0 || pool.isReleased)
+        ) return false;
+
         return true;
     }
 }
