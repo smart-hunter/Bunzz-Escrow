@@ -90,11 +90,11 @@ contract EscrowByAgent is Ownable, ReentrancyGuard, IEscrowByAgent {
         uint256 agentFee = pool.amount * agentFeePercent / 10000;
 
         if (pool.token != address(0x0)) {
-            IERC20(pool.token).safeTransfer(msg.sender, pool.amount - fee - agentFee);
+            IERC20(pool.token).safeTransfer(pool.recipient, pool.amount - fee - agentFee);
             IERC20(pool.token).safeTransfer(owner(), fee);
             IERC20(pool.token).safeTransfer(pool.agent, agentFee);
         } else {
-            (bool sent1, ) = payable(msg.sender).call{value: (pool.amount - fee - agentFee)}("");
+            (bool sent1, ) = payable(pool.recipient).call{value: (pool.amount - fee - agentFee)}("");
             (bool sent2, ) = payable(owner()).call{value: (fee)}("");
             (bool sent3, ) = payable(pool.agent).call{value: (agentFee)}("");
             require(sent1 && sent2 && sent3, "Failed to send Ether");
