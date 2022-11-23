@@ -3,50 +3,30 @@
 ## Overview
 
 This is an escrow module for freelancer service operated by agents.
-The agent will release the payment with the approval of the sender after the expiration time.
-It can also be used for commerce.
-Proceed with the necessary agreements outside the blockchain.
+The sender deposit money for recipient and set agent for the payment.
+If the sender want to release the payment, then he can ask the agent to release the payment for the recipient.
 
-``
-For example, you can assume that the client is hiring a freelancer for a project.
-For fairness, the client and freelancer select the agent and the client deposits the amount to the escrow contract.
-Now the freelancer is free to start working.
-If the freelancer has done the task correctly, the client asks the agent to release the payment.
-When the agent releases, the amount is sent to the freelancer and some fees are sent to the agent and smart contract owner.
-If the client is not satisfied with the result of the freelancer, the client can cancel the payment.
-If the freelancer agrees, it can be refunded immediately.
-Otherwise, the agent may agree to examine the process and cancel the payment.
-But the money will be locked for 3 months because freelancer didn't agree.
-``
-
-Deployer will set the fee percent. fee percent and cancelLockTime are fixed values.
-
+Deployer will set the owner fee percent and agent fee percent. The fee percent and cancelLockTime are fixed values.
 
 ## How to use
-1. Create an escrow pool with recipient, agent and amount
+1. Deploy this contract. (Anybody can deploy this contract for an escrow service and make money from this service)
+2. Create an escrow pool with recipient, agent and amount
     - call ```depositByETH``` to deposit ETH
     - call ```deposit``` to deposit ERC20 token
         * can't use same address for recipient and agent. 
-2. Once you (sender) allow the agent to release the payment (this option is outside of blockchain), the agent will release the payment.
+3. Once you (sender) allow the agent to release the payment (this option is outside of blockchain), the agent will release the payment.
     - call ```release``` by agent
         * ownerFee will be transferred to smart contract owner
         * agentFee will be transferred to the agent
-3. Approve to cancel the payment when you want to cancel it.
+4. Approve to cancel the payment when you want to cancel it.
     - call ```approveCancel```
         * sender, recipient and agent will approve for canceling
-4. Cancel the payment
+5. Cancel the payment
     - call ```cancel``` to cancel the payment
-        * That works in the following cases. 
-            1) when caller is the sender (owner) of pool:
-                refundStatus.recipient is true 
-                or
-                refundStatus.agent is true and currentTime > pool.createdAt + lockCancelTime
-            2) when caller is not the sender (owner) of pool:
-                refundStatus.recipient must be true
-
-                refundStatus.recipient is true
-                or
-                refundStatus.agent is true and currentTime > pool.createdAt + lockCancelTime
+        This function works for these cases:
+            1) recipient and sender accepted.
+            2) sender accepted and recipient didn't 
+                * need agreement of agent
 
 
 ## Functions
@@ -166,11 +146,15 @@ if cancelable - return true, or return false
 
 ##### _feePercent
 Fee percent for smart contract owner
+10000 means 100%
+so if you want to set the fee percent to 5%, feePercent is 500
 
 ##### _agentFeePercent
 Fee percent for pool agent
+10000 means 100%
+so if you want to set the fee percent to 5%, feePercent is 500
 
-##### _agentFeePercent
+##### __cancelLockDays
 Lock days for compulsory cancellation
 
 
