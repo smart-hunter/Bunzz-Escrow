@@ -135,17 +135,17 @@ describe("Test EscrowByAgent contract: ", () => {
       it("address is invalid: same", async () => {
         const ethAmount = OneToken.mul(10);
         const option = { value: ethAmount };
-        expect(
+        await expect(
           escrow
             .connect(sender1)
             .depositByETH(recipient1.address, recipient1.address, option)
         ).to.be.revertedWith("address invalid: same");
-        expect(
+        await expect(
           escrow
             .connect(sender1)
             .depositByETH(sender1.address, agent1.address, option)
         ).to.be.revertedWith("address invalid: same");
-        expect(
+        await expect(
           escrow
             .connect(sender1)
             .depositByETH(recipient1.address, sender1.address, option)
@@ -158,12 +158,12 @@ describe("Test EscrowByAgent contract: ", () => {
         const pool = await escrow.pools(poolId);
 
         // check poolInfo
-        expect(pool.token).to.be.equal(constants.AddressZero);
-        expect(pool.sender).to.be.equal(sender1.address);
-        expect(pool.recipient).to.be.equal(recipient1.address);
-        expect(pool.agent).to.be.equal(agent1.address);
-        expect(pool.isReleased).to.be.equal(false);
-        expect(pool.amount).to.be.equal(ethAmount);
+        await expect(pool.token).to.be.equal(constants.AddressZero);
+        await expect(pool.sender).to.be.equal(sender1.address);
+        await expect(pool.recipient).to.be.equal(recipient1.address);
+        await expect(pool.agent).to.be.equal(agent1.address);
+        await expect(pool.isReleased).to.be.equal(false);
+        await expect(pool.amount).to.be.equal(ethAmount);
       });
     });
 
@@ -207,7 +207,8 @@ describe("Test EscrowByAgent contract: ", () => {
 
       it("address is invalid: same", async () => {
         const amount = OneToken.mul(1000);
-        expect(
+        await bToken.connect(sender2).approve(escrow.address, amount);
+        await expect(
           escrow
             .connect(sender2)
             .deposit(
@@ -217,12 +218,12 @@ describe("Test EscrowByAgent contract: ", () => {
               amount
             )
         ).to.be.revertedWith("address invalid: same");
-        expect(
+        await expect(
           escrow
             .connect(sender2)
             .deposit(bToken.address, sender2.address, agent2.address, amount)
         ).to.be.revertedWith("address invalid: same");
-        expect(
+        await expect(
           escrow
             .connect(sender2)
             .deposit(
@@ -254,12 +255,12 @@ describe("Test EscrowByAgent contract: ", () => {
         const pool = await escrow.pools(poolId);
 
         // check poolInfo
-        expect(pool.token).to.be.equal(aToken.address);
-        expect(pool.sender).to.be.equal(sender2.address);
-        expect(pool.recipient).to.be.equal(recipient2.address);
-        expect(pool.agent).to.be.equal(agent2.address);
-        expect(pool.isReleased).to.be.equal(false);
-        expect(pool.amount).to.be.equal(amount);
+        await expect(pool.token).to.be.equal(aToken.address);
+        await expect(pool.sender).to.be.equal(sender2.address);
+        await expect(pool.recipient).to.be.equal(recipient2.address);
+        await expect(pool.agent).to.be.equal(agent2.address);
+        await expect(pool.isReleased).to.be.equal(false);
+        await expect(pool.amount).to.be.equal(amount);
       });
     });
 
@@ -283,7 +284,7 @@ describe("Test EscrowByAgent contract: ", () => {
       it("approveCancel success: sender !!!", async () => {
         await escrow.connect(sender2).approveCancel(poolId);
 
-        expect(
+        await expect(
           escrow.connect(sender2).approveCancel(poolId)
         ).to.be.revertedWith("already done");
       });
@@ -291,7 +292,7 @@ describe("Test EscrowByAgent contract: ", () => {
       it("approveCancel success: agent !!!", async () => {
         await escrow.connect(agent2).approveCancel(poolId);
 
-        expect(escrow.connect(agent2).approveCancel(poolId)).to.be.revertedWith(
+        await expect(escrow.connect(agent2).approveCancel(poolId)).to.be.revertedWith(
           "already done"
         );
       });
@@ -299,7 +300,7 @@ describe("Test EscrowByAgent contract: ", () => {
       it("approveCancel success: recipient !!!", async () => {
         await escrow.connect(recipient2).approveCancel(poolId);
 
-        expect(
+        await expect(
           escrow.connect(recipient2).approveCancel(poolId)
         ).to.be.revertedWith("already done");
       });
@@ -430,7 +431,7 @@ describe("Test EscrowByAgent contract: ", () => {
         await cancelPool(sender1, poolId);
 
         const balanceOfSender_2 = await aToken.balanceOf(sender2.address);
-        expect(balanceOfSender_2).to.be.equal(balanceOfSender);
+        await expect(balanceOfSender_2).to.be.equal(balanceOfSender);
       });
     });
 
@@ -473,12 +474,12 @@ describe("Test EscrowByAgent contract: ", () => {
         const pool = await escrow.pools(0);
 
         // check poolInfo
-        expect(pool.token).to.be.equal(constants.AddressZero);
-        expect(pool.sender).to.be.equal(sender1.address);
-        expect(pool.recipient).to.be.equal(recipient1.address);
-        expect(pool.agent).to.be.equal(agent1.address);
-        expect(pool.isReleased).to.be.equal(true);
-        expect(pool.amount).to.be.equal(ethAmount);
+        await expect(pool.token).to.be.equal(constants.AddressZero);
+        await expect(pool.sender).to.be.equal(sender1.address);
+        await expect(pool.recipient).to.be.equal(recipient1.address);
+        await expect(pool.agent).to.be.equal(agent1.address);
+        await expect(pool.isReleased).to.be.equal(true);
+        await expect(pool.amount).to.be.equal(ethAmount);
 
         // check balance
         const balanceOfOwner_2 = await ethers.provider.getBalance(
@@ -491,16 +492,16 @@ describe("Test EscrowByAgent contract: ", () => {
           recipient1.address
         );
 
-        expect(balanceOfOwner_2.sub(balanceOfOwner)).to.be.equal(
+        await expect(balanceOfOwner_2.sub(balanceOfOwner)).to.be.equal(
           ethAmount.mul(ownerFeePercent).div(100)
         );
-        expect(balanceOfAgent_2.sub(balanceOfAgent)).to.be.equal(
+        await expect(balanceOfAgent_2.sub(balanceOfAgent)).to.be.equal(
           ethAmount
             .mul(agentFeePercent)
             .div(100)
             .sub(receipt.gasUsed.mul(receipt.effectiveGasPrice))
         );
-        expect(balanceOfRecipient_2.sub(balanceOfRecipient)).to.be.equal(
+        await expect(balanceOfRecipient_2.sub(balanceOfRecipient)).to.be.equal(
           ethAmount.mul(90).div(100)
         );
       });
@@ -518,25 +519,25 @@ describe("Test EscrowByAgent contract: ", () => {
         const pool = await escrow.pools(poolId);
 
         // check poolInfo
-        expect(pool.token).to.be.equal(aToken.address);
-        expect(pool.sender).to.be.equal(sender2.address);
-        expect(pool.recipient).to.be.equal(recipient2.address);
-        expect(pool.agent).to.be.equal(agent2.address);
-        expect(pool.isReleased).to.be.equal(true);
-        expect(pool.amount).to.be.equal(amount);
+        await expect(pool.token).to.be.equal(aToken.address);
+        await expect(pool.sender).to.be.equal(sender2.address);
+        await expect(pool.recipient).to.be.equal(recipient2.address);
+        await expect(pool.agent).to.be.equal(agent2.address);
+        await expect(pool.isReleased).to.be.equal(true);
+        await expect(pool.amount).to.be.equal(amount);
 
         // check balance
         const balanceOfOwner_2 = await aToken.balanceOf(owner.address);
         const balanceOfAgent_2 = await aToken.balanceOf(agent2.address);
         const balanceOfRecipient_2 = await aToken.balanceOf(recipient2.address);
 
-        expect(balanceOfOwner_2.sub(balanceOfOwner)).to.be.equal(
+        await expect(balanceOfOwner_2.sub(balanceOfOwner)).to.be.equal(
           amount.mul(ownerFeePercent).div(100)
         );
-        expect(balanceOfAgent_2.sub(balanceOfAgent)).to.be.equal(
+        await expect(balanceOfAgent_2.sub(balanceOfAgent)).to.be.equal(
           amount.mul(agentFeePercent).div(100)
         );
-        expect(balanceOfRecipient_2.sub(balanceOfRecipient)).to.be.equal(
+        await expect(balanceOfRecipient_2.sub(balanceOfRecipient)).to.be.equal(
           amount.mul(90).div(100)
         );
       });
